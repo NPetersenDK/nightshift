@@ -1,0 +1,5 @@
+env.json
+data/
+claude-token.txt
+gh-token.txt
+*.exe

@@ -1,0 +1,21 @@
+version: 2
+project_name: nightshift
+builds:
+  - env: [CGO_ENABLED=0]
+    goos: [linux, windows, darwin]
+    goarch: [amd64, arm64]
+    ignore:
+      - goos: darwin
+        goarch: amd64
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+archives:
+  - name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files: [env.example.json]
+checksum:
+  name_template: checksums.txt
+changelog:
+  disable: true
