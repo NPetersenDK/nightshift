@@ -4,14 +4,11 @@ Runs [Claude Code](https://claude.com/claude-code) on your Azure DevOps tasks wh
 
 ## Quick start
 
-1. **Install** (Linux/macOS: amd64+arm64, Windows: amd64+arm64)
-   ```sh
-   curl -fsSL https://raw.githubusercontent.com/NPetersenDK/nightshift/main/install.sh | sh
-   ```
-   ```powershell
-   irm https://raw.githubusercontent.com/NPetersenDK/nightshift/main/install.ps1 | iex
-   ```
-2. **Create a config** in an empty folder: `nightshift init`, then edit `env.json` (DevOps org/project/team, repos, Features).
+1. **Download** the archive for your platform from the [latest release](https://github.com/NPetersenDK/nightshift/releases/latest) and unpack it into an empty folder (nothing is installed system-wide):
+   - macOS (Apple Silicon): `nightshift_darwin_arm64.tar.gz` (then `xattr -d com.apple.quarantine nightshift`)
+   - Linux: `nightshift_linux_amd64.tar.gz` / `nightshift_linux_arm64.tar.gz`
+   - Windows: `nightshift_windows_amd64.zip` / `nightshift_windows_arm64.zip`
+2. **Create a config** in that folder: `./nightshift init`, then edit `env.json` (DevOps org/project/team, repos, Features).
 3. **Log in Claude**: run `claude setup-token`, put the token in `claude-token.txt` next to `env.json`.
 4. **GitHub** (for PRs): put a fine-grained token in `gh-token.txt` (or set `GH_TOKEN`).
 5. **Check**: `nightshift usage`, `nightshift work`, `nightshift run --dry-run`.
