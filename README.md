@@ -4,7 +4,11 @@ Runs [Claude Code](https://claude.com/claude-code) on your Azure DevOps tasks wh
 
 ## Quick start
 
-1. **Download** the archive for your platform from the [latest release](https://github.com/NPetersenDK/nightshift/releases/latest) and unpack it into an empty folder (nothing is installed system-wide):
+1. **Download** the archive for your platform from the [latest release](https://github.com/NPetersenDK/nightshift/releases/latest) and unpack it into an empty folder (nothing is installed system-wide). On Linux/macOS, run this in that folder instead:
+   ```sh
+   curl -fsSL https://raw.githubusercontent.com/NPetersenDK/nightshift/main/install.sh | sh
+   ```
+   Archives:
    - macOS (Apple Silicon): `nightshift_darwin_arm64.tar.gz` (then `xattr -d com.apple.quarantine nightshift`)
    - Linux: `nightshift_linux_amd64.tar.gz` / `nightshift_linux_arm64.tar.gz`
    - Windows: `nightshift_windows_amd64.zip` / `nightshift_windows_arm64.zip`
