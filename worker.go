@@ -291,7 +291,7 @@ func (c *Config) completeRun(d *DevOps, st *State, run *RunResult, runErr error)
 	}
 	s, _ := d.itemState(st.TaskID)
 	c.clearState()
-	if s.Category == "Completed" {
+	if s.done() {
 		return runOutcome{true, fmt.Sprintf("done #%d", st.TaskID)}
 	}
 	return runOutcome{true, fmt.Sprintf("needs-attention #%d", st.TaskID)}

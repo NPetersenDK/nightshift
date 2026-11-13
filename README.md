@@ -36,6 +36,8 @@ It replaces the binary with the latest release and pulls the latest `nightshift-
 - Put User Stories and Tasks under those Features. Repos come from `repo:<alias>` tags on the Task, Story or Feature (nearest wins) and are mapped in `repos`.
 - One branch `feature/us<id>-<slug>` per User Story, same name in every repo. Tasks in a story share it.
 - When all Tasks in a Story are closed, the Story closes. Features tagged `keep-open` never close.
+- `closeAs`: state finished items get. `Resolved` (default) or `Completed`. Work item types without a Resolved state (e.g. Agile Task) fall back to Completed. Resolved items count as done.
+- `webhook.url`: posted when a task is closed, with the task's DevOps link and the PR links from the close comment. `webhook.format`: `json` (default, `text` plus fields; works for Slack), `discord`, or `teams` (Adaptive Card for a Teams Workflows webhook).
 - `projects[].team` limits work to that DevOps team's area paths.
 - `docker.allowAllTools` (default `true`): inside the container Claude runs with all permission checks off. Set `false` to use the same restricted tool list as local mode (`git`, `gh`, plus each repo's `allowedTools`).
 - `repos.<alias>.path` is optional and only used in local mode (`docker.enabled: false`): an existing local clone to branch from. If omitted, nightshift clones `url` into `data/repos/<alias>`.

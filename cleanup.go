@@ -39,7 +39,7 @@ func (c *Config) cleanup(d *DevOps, force bool) {
 			continue
 		}
 		item, err := d.itemState(id)
-		if err != nil || (item.Category != "Completed" && item.Category != "Removed") {
+		if err != nil || !item.done() {
 			continue
 		}
 		repos, _ := os.ReadDir(dir)

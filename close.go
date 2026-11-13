@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"regexp"
-	"slices"
 	"strings"
 )
 
@@ -15,10 +14,13 @@ type CloseOpts struct {
 	State       string
 	CommentOnly bool
 	NoCascade   bool
+	CloseAs     string // state category: Resolved or Completed (falls back to Completed when the type has no Resolved state)
+	Webhook     Webhook
 }
 
 // closeItem comments and closes a work item, then closes parents whose children are all closed
-// (never Features tagged keep-open). Returns terse status lines.
+// (never Features tagged keep-open). After the item itself closes it posts the webhook, if configured.
+// Returns terse status lines.
 func closeItem(d *DevOps, o CloseOpts) ([]string, error) {
 	if o.CommentOnly {
 		return []string{"ok"}, d.comment(o.ID, o.Comment)
@@ -30,18 +32,26 @@ func closeItem(d *DevOps, o CloseOpts) ([]string, error) {
 	}
 	isDone := func(id int) (bool, error) {
 		s, err := d.itemState(id)
-		return slices.Contains([]string{"Completed", "Removed"}, s.Category), err
+		return s.done(), err
+	}
+	categories := []string{"Completed"}
+	if o.CloseAs != "Completed" {
+		categories = []string{"Resolved", "Completed"}
 	}
 	closeOne := func(w *WorkItem, text, target string) (string, error) {
-		if target == "" {
-			t, err := d.stateName(w.field("System.WorkItemType"), "Completed")
+		typ := w.field("System.WorkItemType")
+		for _, cat := range categories {
+			if target != "" {
+				break
+			}
+			t, err := d.stateName(typ, cat)
 			if err != nil {
 				return "", err
 			}
-			if t == "" {
-				return "", fmt.Errorf("no 'Completed' state for %s, pass --state", w.field("System.WorkItemType"))
-			}
 			target = t
+		}
+		if target == "" {
+			return "", fmt.Errorf("no %s state for %s, pass --state", strings.Join(categories, "/"), typ)
 		}
 		if err := d.comment(w.ID, text); err != nil {
 			return "", err
@@ -49,7 +59,7 @@ func closeItem(d *DevOps, o CloseOpts) ([]string, error) {
 		if err := d.setState(w.ID, target); err != nil {
 			return "", err
 		}
-		return fmt.Sprintf("closed #%d", w.ID), nil
+		return fmt.Sprintf("%s #%d", strings.ToLower(target), w.ID), nil
 	}
 
 	var out []string
@@ -62,6 +72,14 @@ func closeItem(d *DevOps, o CloseOpts) ([]string, error) {
 		return out, err
 	}
 	out = append(out, line)
+	if o.Webhook.URL != "" {
+		// the item is already closed; a webhook failure is reported, not returned
+		if err := o.Webhook.send(cur.ID, cur.field("System.Title"), d.itemURL(cur.ID), prURLs(o.Comment)); err != nil {
+			out = append(out, "webhook failed: "+err.Error())
+		} else {
+			out = append(out, "webhook sent")
+		}
+	}
 	if o.NoCascade {
 		return out, nil
 	}

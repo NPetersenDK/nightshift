@@ -177,7 +177,7 @@ func (c *Config) dockerArgs(spec RunSpec, name string) (args, env []string) {
 
 // containerConfig writes a trimmed config (no PAT, no repo list) for `nightshift close` inside the container.
 func (c *Config) containerConfig() string {
-	slim := Config{Orgs: make([]Org, len(c.Orgs))}
+	slim := Config{Orgs: make([]Org, len(c.Orgs)), CloseAs: c.CloseAs, Webhook: c.Webhook}
 	for i, o := range c.Orgs {
 		o.PAT = ""
 		slim.Orgs[i] = o

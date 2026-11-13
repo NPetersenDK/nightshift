@@ -19,6 +19,8 @@ type Config struct {
 	Model            string            `json:"model"`
 	Models           map[string]string `json:"models"`
 	WorktreesRoot    string            `json:"worktreesRoot"`
+	CloseAs          string            `json:"closeAs"` // state category for finished items: Resolved (default) or Completed
+	Webhook          Webhook           `json:"webhook"`
 	Docker           DockerCfg         `json:"docker"`
 	Repos            map[string]Repo   `json:"repos"`
 	Orgs             []Org             `json:"orgs"`
@@ -89,6 +91,14 @@ func loadConfig() (*Config, error) {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	cfg.dir = filepath.Dir(path)
+	switch strings.ToLower(cfg.CloseAs) {
+	case "", "resolved":
+		cfg.CloseAs = "Resolved"
+	case "completed", "closed", "done":
+		cfg.CloseAs = "Completed"
+	default:
+		return nil, fmt.Errorf("%s: closeAs must be Resolved or Completed, got %q", path, cfg.CloseAs)
+	}
 	for alias, r := range cfg.Repos {
 		if r.Path == "" {
 			r.Path = cfg.dataPath(filepath.Join("repos", alias))

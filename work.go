@@ -20,7 +20,7 @@ type Node struct {
 	Children           []*Node `json:"children,omitempty"`
 }
 
-var doneStates = []string{"Closed", "Done", "Removed", "Completed"}
+var doneStates = []string{"Closed", "Done", "Removed", "Completed", "Resolved"}
 
 // openWork fetches open Features (only those listed in config) with their User Stories and Tasks.
 func openWork(d *DevOps) ([]*Node, error) {

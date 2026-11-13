@@ -136,6 +136,11 @@ func (d *DevOps) stateName(typ, category string) (string, error) {
 
 type ItemState struct{ Type, State, Category string }
 
+// done reports whether nightshift treats the item as finished (Resolved counts, see closeAs).
+func (s ItemState) done() bool {
+	return s.Category == "Resolved" || s.Category == "Completed" || s.Category == "Removed"
+}
+
 func (d *DevOps) itemState(id int) (ItemState, error) {
 	var w WorkItem
 	if err := d.do("GET", fmt.Sprintf("%s/_apis/wit/workitems/%d?fields=System.WorkItemType,System.State", d.proj(), id), nil, "", "", &w); err != nil {

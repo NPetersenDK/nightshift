@@ -116,7 +116,8 @@ func execute(cmd string, args []string) error {
 		if *id == 0 || *comment == "" {
 			return fmt.Errorf("close needs --id and --comment")
 		}
-		lines, err := closeItem(d, CloseOpts{ID: *id, Comment: *comment, State: *state, CommentOnly: *commentOnly, NoCascade: *noCascade})
+		lines, err := closeItem(d, CloseOpts{ID: *id, Comment: *comment, State: *state, CommentOnly: *commentOnly, NoCascade: *noCascade,
+			CloseAs: cfg.CloseAs, Webhook: cfg.Webhook})
 		for _, l := range lines {
 			fmt.Println(l)
 		}
