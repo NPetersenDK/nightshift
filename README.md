@@ -20,6 +20,16 @@ Runs [Claude Code](https://claude.com/claude-code) on your Azure DevOps tasks wh
 
 With `docker.enabled: true` (default in the starter config) the only requirement on the host is Docker. Claude runs inside the `ghcr.io/npetersendk/nightshift-agent` image, which contains Claude Code, git, gh, Node, .NET and Go. Set it to `false` to run `claude` directly on the host.
 
+## Updating
+
+In the folder with `nightshift` and `env.json` (Linux/macOS):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/NPetersenDK/nightshift/main/update.sh | sh
+```
+
+It replaces the binary with the latest release and pulls the latest `nightshift-agent` image. `env.json`, tokens and `data/` are kept. A run in progress finishes on the old binary. On Windows, download the new zip and replace `nightshift.exe`, then run `docker pull ghcr.io/npetersendk/nightshift-agent:latest`.
+
 ## How work is found
 
 - `projects[].features` lists the Features nightshift works on. `nightshift sync` creates them (tagged `keep-open; repo:<alias>`, in the team's area path) and keeps them open. Other Features are ignored.

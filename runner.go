@@ -51,11 +51,33 @@ func (c *Config) runClaude(spec RunSpec) ([]string, error) {
 		lastDiag = err.Error()
 		return nil, err
 	}
+	// claude -p sometimes stays alive after its final result (seen after background subagents),
+	// which would block us until the task timeout. Once a result arrives with nothing left running,
+	// give it a short grace period to exit, then kill it. Any further output cancels the kill.
+	kill := func() {
+		if name != "" {
+			exec.Command("docker", "kill", name).Run()
+		} else if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+	}
+	var linger *time.Timer
 	var lines []string
 	sc := bufio.NewScanner(out)
 	sc.Buffer(make([]byte, 1<<20), 64<<20)
 	for sc.Scan() {
-		lines = append(lines, sc.Text())
+		line := sc.Text()
+		lines = append(lines, line)
+		if linger != nil {
+			linger.Stop()
+			linger = nil
+		}
+		if isFinalResult(line) {
+			linger = time.AfterFunc(resultGrace, kill)
+		}
+	}
+	if linger != nil {
+		linger.Stop()
 	}
 	werr := cmd.Wait()
 	lastDiag = diagnose(werr, lines, stderr.String())
@@ -67,6 +89,40 @@ func (c *Config) runClaude(spec RunSpec) ([]string, error) {
 	}
 	_ = werr // a non-zero exit is reported through the result event; callers inspect the events
 	return lines, nil
+}
+
+// resultGrace is how long claude may linger after its final result before it is killed.
+const resultGrace = 60 * time.Second
+
+// isFinalResult reports whether a stream-json line is a result event after which no more work is pending:
+// no queued turns and every spawned subagent completed, failed or was killed.
+func isFinalResult(line string) bool {
+	if !strings.Contains(line, `"type":"result"`) {
+		return false
+	}
+	var e struct {
+		Type        string `json:"type"`
+		QueuedTurns int    `json:"queued_turn_count"`
+		Subagents   *struct {
+			Spawned   int            `json:"spawned"`
+			Completed int            `json:"completed"`
+			Failed    int            `json:"failed"`
+			Killed    map[string]int `json:"killed"`
+		} `json:"subagent_stats"`
+	}
+	if json.Unmarshal([]byte(strings.TrimSpace(line)), &e) != nil || e.Type != "result" || e.QueuedTurns > 0 {
+		return false
+	}
+	if s := e.Subagents; s != nil {
+		ended := s.Completed + s.Failed
+		for _, n := range s.Killed {
+			ended += n
+		}
+		if ended < s.Spawned {
+			return false
+		}
+	}
+	return true
 }
 
 // lastDiag describes the most recent claude run (exit error, stderr, stdout head) for error messages.
