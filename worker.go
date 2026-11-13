@@ -198,7 +198,7 @@ type RunResult struct {
 
 func (c *Config) invokeClaude(prompt, cwd string, aliases []string, sessionArgs []string, logName string, taskID int) (*RunResult, error) {
 	args := []string{"-p", "--output-format", "stream-json", "--verbose"}
-	if c.Docker.Enabled {
+	if c.Docker.Enabled && c.Docker.allowAll() {
 		args = append(args, "--dangerously-skip-permissions", "--agents", c.agentsJSON())
 	} else {
 		_, closeTool := c.closeCommand()
@@ -206,10 +206,13 @@ func (c *Config) invokeClaude(prompt, cwd string, aliases []string, sessionArgs 
 		for _, a := range aliases {
 			tools = append(tools, c.Repos[a].AllowedTools...)
 		}
-		agentFile := c.dataPath("agents.json")
-		os.WriteFile(agentFile, []byte(c.agentsJSON()), 0o644)
+		agents := c.agentsJSON() // inline: a host file path would not exist inside the container
+		if !c.Docker.Enabled {
+			agents = c.dataPath("agents.json")
+			os.WriteFile(agents, []byte(c.agentsJSON()), 0o644)
+		}
 		args = append(args, "--permission-mode", "acceptEdits", "--permission-prompts", "none",
-			"--allowedTools", strings.Join(tools, ","), "--agents", agentFile)
+			"--allowedTools", strings.Join(tools, ","), "--agents", agents)
 	}
 	args = append(args, sessionArgs...)
 	model := c.Model

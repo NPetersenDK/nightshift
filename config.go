@@ -34,7 +34,10 @@ type DockerCfg struct {
 	CPUs               string `json:"cpus"`
 	GitName            string `json:"gitName"`
 	GitEmail           string `json:"gitEmail"`
+	AllowAllTools      *bool  `json:"allowAllTools"` // default true: skip all permission checks inside the container
 }
+
+func (d DockerCfg) allowAll() bool { return d.AllowAllTools == nil || *d.AllowAllTools }
 
 type Repo struct {
 	URL          string   `json:"url"`
