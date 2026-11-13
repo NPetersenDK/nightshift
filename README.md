@@ -27,6 +27,7 @@ With `docker.enabled: true` (default in the starter config) the only requirement
 - One branch `feature/us<id>-<slug>` per User Story, same name in every repo. Tasks in a story share it.
 - When all Tasks in a Story are closed, the Story closes. Features tagged `keep-open` never close.
 - `projects[].team` limits work to that DevOps team's area paths.
+- `repos.<alias>.path` is optional and only used in local mode (`docker.enabled: false`): an existing local clone to branch from. If omitted, nightshift clones `url` into `data/repos/<alias>`.
 
 ## Models
 

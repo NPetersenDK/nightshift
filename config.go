@@ -86,6 +86,12 @@ func loadConfig() (*Config, error) {
 		return nil, fmt.Errorf("%s: %w", path, err)
 	}
 	cfg.dir = filepath.Dir(path)
+	for alias, r := range cfg.Repos {
+		if r.Path == "" {
+			r.Path = cfg.dataPath(filepath.Join("repos", alias))
+			cfg.Repos[alias] = r
+		}
+	}
 	loadSecretFile("CLAUDE_CODE_OAUTH_TOKEN", filepath.Join(cfg.dir, "claude-token.txt"))
 	loadSecretFile("GH_TOKEN", filepath.Join(cfg.dir, "gh-token.txt"))
 	return cfg, nil
