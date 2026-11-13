@@ -13,6 +13,5 @@ file="nightshift_${os}_${arch}.tar.gz"
 curl -fsSL "https://github.com/NPetersenDK/nightshift/releases/latest/download/$file" -o "$file"
 tar -xzf "$file" nightshift
 rm -f "$file"
-[ "$os" = darwin ] && xattr -d com.apple.quarantine nightshift 2>/dev/null || true
 echo "unpacked ./nightshift"
 echo "next: ./nightshift init"

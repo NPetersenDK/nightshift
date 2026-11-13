@@ -9,7 +9,7 @@ Runs [Claude Code](https://claude.com/claude-code) on your Azure DevOps tasks wh
    curl -fsSL https://raw.githubusercontent.com/NPetersenDK/nightshift/main/install.sh | sh
    ```
    Archives:
-   - macOS (Apple Silicon): `nightshift_darwin_arm64.tar.gz` (then `xattr -d com.apple.quarantine nightshift`)
+   - macOS (Apple Silicon): `nightshift_darwin_arm64.tar.gz`
    - Linux: `nightshift_linux_amd64.tar.gz` / `nightshift_linux_arm64.tar.gz`
    - Windows: `nightshift_windows_amd64.zip` / `nightshift_windows_arm64.zip`
 2. **Create a config** in that folder: `./nightshift init`, then edit `env.json` (DevOps org/project/team, repos, Features).
