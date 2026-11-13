@@ -31,7 +31,7 @@ func main() {
 	if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
 		cmd, args = args[0], args[1:]
 	}
-	if cmd == "help" {
+	if cmd == "help" || (len(args) > 0 && (args[0] == "-h" || args[0] == "-help" || args[0] == "--help")) {
 		fmt.Println(usageText)
 		return
 	}

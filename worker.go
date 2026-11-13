@@ -8,8 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"slices"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -56,7 +59,8 @@ func newUUID() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
-// acquireLock returns a release func, or nil when another worker holds a fresh lock.
+// acquireLock returns a release func, or nil when another live worker holds a fresh lock.
+// A lock whose PID no longer runs (e.g. after Ctrl+C) is stale and taken over.
 func (c *Config) acquireLock() func() {
 	p := c.dataPath(".worker.lock")
 	stale := time.Duration(c.Docker.TaskTimeoutMinutes+60) * time.Minute
@@ -67,13 +71,27 @@ func (c *Config) acquireLock() func() {
 			f.Close()
 			return func() { os.Remove(p) }
 		}
-		if st, serr := os.Stat(p); serr == nil && time.Since(st.ModTime()) > stale {
+		b, _ := os.ReadFile(p)
+		pid, _ := strconv.Atoi(strings.TrimSpace(string(b)))
+		if st, serr := os.Stat(p); serr == nil && (time.Since(st.ModTime()) > stale || (pid > 0 && !processAlive(pid))) {
 			os.Remove(p)
 			continue
 		}
+		fmt.Printf("locked by pid %d (%s)\n", pid, p)
 		return nil
 	}
 	return nil
+}
+
+func processAlive(pid int) bool {
+	proc, err := os.FindProcess(pid) // fails on Windows when the process is gone
+	if err != nil {
+		return false
+	}
+	if runtime.GOOS == "windows" {
+		return true
+	}
+	return proc.Signal(syscall.Signal(0)) == nil
 }
 
 var reRepoTag = regexp.MustCompile(`repo:([\w.-]+)`)
