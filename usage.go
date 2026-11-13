@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -44,13 +43,15 @@ var probeArgs = []string{"--safe-mode", "--no-session-persistence"}
 
 // getUsage reads subscription usage via the free local /usage command; falls back to a haiku probe.
 func getUsage(c *Config) (*Usage, error) {
+	lastDiag = ""
 	if u := usageFromCommand(c); u != nil {
 		return u, nil
 	}
+	d1 := lastDiag
 	if u := usageFromProbe(c); u != nil {
 		return u, nil
 	}
-	return nil, errors.New("could not read usage")
+	return nil, fmt.Errorf("could not read usage\n--- /usage:\n%s\n--- probe:\n%s", d1, lastDiag)
 }
 
 func usageFromCommand(c *Config) *Usage {

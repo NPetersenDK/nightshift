@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -40,11 +41,14 @@ func (c *Config) runClaude(spec RunSpec) ([]string, error) {
 		cmd.Dir = spec.Cwd
 	}
 	cmd.Stdin = strings.NewReader(spec.Stdin)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	out, err := cmd.StdoutPipe()
 	if err != nil {
 		return nil, err
 	}
 	if err := cmd.Start(); err != nil {
+		lastDiag = err.Error()
 		return nil, err
 	}
 	var lines []string
@@ -54,6 +58,7 @@ func (c *Config) runClaude(spec RunSpec) ([]string, error) {
 		lines = append(lines, sc.Text())
 	}
 	werr := cmd.Wait()
+	lastDiag = diagnose(werr, lines, stderr.String())
 	if ctx.Err() != nil && name != "" {
 		exec.Command("docker", "kill", name).Run()
 	}
@@ -62,6 +67,30 @@ func (c *Config) runClaude(spec RunSpec) ([]string, error) {
 	}
 	_ = werr // a non-zero exit is reported through the result event; callers inspect the events
 	return lines, nil
+}
+
+// lastDiag describes the most recent claude run (exit error, stderr, stdout head) for error messages.
+var lastDiag string
+
+func diagnose(werr error, lines []string, stderr string) string {
+	var b strings.Builder
+	if werr != nil {
+		b.WriteString(werr.Error() + "\n")
+	}
+	if s := strings.TrimSpace(stderr); s != "" {
+		b.WriteString(clip(s, 800) + "\n")
+	}
+	if len(lines) > 0 {
+		b.WriteString(clip(strings.Join(lines, "\n"), 800))
+	}
+	return strings.TrimSpace(b.String())
+}
+
+func clip(s string, n int) string {
+	if len(s) > n {
+		return s[:n] + "..."
+	}
+	return s
 }
 
 func (c *Config) dockerArgs(spec RunSpec, name string) (args, env []string) {
